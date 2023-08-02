@@ -1,0 +1,4 @@
+---
+  - name: Start zabbix-agent and enable it on the every boot
+    service: name=zabbix-agent state=started enabled=yes
+

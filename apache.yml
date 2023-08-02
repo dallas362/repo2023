@@ -1,0 +1,13 @@
+---
+- name: Test ping
+  hosts: all
+  become: yes
+
+  tasks:
+
+  - name: Install Apache WebServer
+    apt:  name=apache2 state=latest
+
+  - name: Start Apache and enable it on the every boot
+    service: name=apache2 state=started enabled=yes
+ 

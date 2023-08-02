@@ -1,0 +1,3 @@
+---
+- name: Install Apache Web Server on Debian Family
+  apt: name=apache2 state=latest
