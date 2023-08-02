@@ -1,0 +1,90 @@
+version: '3.9' services:
+  mysql-server:
+    image: mysql:8.0
+    hostname: mysql-server
+    restart: always
+    networks:
+      - zbx_net
+    command:
+      - mysqld
+      - --character-set-server=utf8
+      - --collation-server=utf8_bin
+      - --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_USER=zabbix
+      - MYSQL_DATABASE=zabbixdb
+      - MYSQL_PASSWORD=zabbix
+      - MYSQL_ROOT_PASSWORD=root
+      - ZBX_JAVAGATEWAY=zabbix-java-gateway
+    volumes:
+      - /zabbix-mysql:/var/lib/mysql:rw
+  zabbix-server-mysql:
+    image: zabbix/zabbix-server-mysql:ubuntu-6.0-latest
+    hostname: zabbix
+    restart: always
+    networks:
+      - zbx_net
+    ports:
+      - 10051:10051
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - zabbix-data:/usr/lib/zabbix
+    environment:
+      - DB_SERVER_HOST=mysql-server
+      - MYSQL_DATABASE=zabbixdb
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix
+      - MYSQL_ROOT_PASSWORD=root
+      - ZBX_JAVAGATEWAY=zabbix-java-gateway
+    depends_on:
+      - mysql-server
+  zabbix-web-apache-mysql:
+    image: zabbix/zabbix-web-apache-mysql:ubuntu-6.0-latest
+    hostname: zabbix-web
+    restart: always
+    networks:
+      - zbx_net
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /zabbix-apache/apache:/etc/ssl/apache:ro
+      - /zabbix-apache/modules/:/usr/share/zabbix/modules/:ro
+    environment:
+      - ZBX_SERVER_HOST=zabbix
+      - DB_SERVER_HOST=mysql-server
+      - MYSQL_DATABASE=zabbixdb
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix
+      - MYSQL_ROOT_PASSWORD=root
+    depends_on:
+      - mysql-server
+      - zabbix-server-mysql
+  zabbix-java-gateway:
+    image: zabbix/zabbix-java-gateway:ubuntu-6.0-latest
+    restart: always
+    networks:
+      - zbx_net
+    ports:
+      - 10052:10052
+  grafana:
+    image: grafana/grafana-enterprise:7.5.6
+    hostname: grafana
+    container_name: grafana
+    user: '0'
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      GF_SERVER_ROOT_URL: "http://grafana:3000/"
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - zbx_net networks:
+  zbx_net: volumes:
+  grafana_data:
+  zabbix-data:
